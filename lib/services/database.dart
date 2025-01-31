@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:hair_main_street_admin/models/admin_variables.dart';
+import 'package:hair_main_street_admin/models/cancellation_model.dart';
 import 'package:hair_main_street_admin/models/orderModel.dart';
 import 'package:hair_main_street_admin/models/userModel.dart';
 import 'package:hair_main_street_admin/models/vendorsModel.dart';
+import 'package:hair_main_street_admin/models/withdrawalRequest_model.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,10 +26,24 @@ class DataBaseService {
 
   CollectionReference productsCollection =
       FirebaseFirestore.instance.collection('products');
+
   CollectionReference ordersCollection =
       FirebaseFirestore.instance.collection('orders');
+
   CollectionReference shopsCollection =
       FirebaseFirestore.instance.collection('vendors');
+
+  CollectionReference adminVariablesCollection =
+      FirebaseFirestore.instance.collection('admin variables');
+
+  CollectionReference withdrawalRequestCollection =
+      FirebaseFirestore.instance.collection('withdrawal requests');
+
+  CollectionReference refundRequestCollection =
+      FirebaseFirestore.instance.collection('withdrawal requests');
+
+  CollectionReference cancellationRequestCollection =
+      FirebaseFirestore.instance.collection('withdrawal requests');
 
   //verify role
   Future<Map<String, dynamic>?> verifyRole() async {
@@ -227,15 +245,14 @@ class DataBaseService {
   }
 
   List<MyUser?> convertToUser(QuerySnapshot<Object?> users) {
-    if (users.docs.isEmpty) {}
+    if (users.docs.isEmpty) {
+      return []; // Return an empty list if no documents are found
+    }
+
     return users.docs.map((doc) {
       var data = doc.data() as Map<String, dynamic>;
-
-      print("Raw data from Firestore: $data");
-
       try {
         MyUser user = MyUser.fromdata(data);
-
         return user;
       } catch (e) {
         print("Error converting user: $e");
@@ -248,7 +265,7 @@ class DataBaseService {
     print('convert');
     return orders.docs.map((doc) {
       var data = doc.data() as Map<String, dynamic>;
-      return Orders.fromdata(data);
+      return Orders.fromJson(data);
     }).toList();
   }
 
@@ -263,11 +280,27 @@ class DataBaseService {
 
   //fetch users
   Stream<List<MyUser?>> fetchUsers() {
-    var stuff = userProfileCollection.snapshots();
+    var users = userProfileCollection.snapshots();
     //print(stuff);
-    return stuff.map(
-      (event) => convertToUser(event),
+    return users.map(
+      (user) => convertToUser(user),
     );
+  }
+
+  //fetch a single users delivery addresses
+  Stream<List<Address>> fetchDeliveryAddress(String userID) {
+    // Fetch delivery addresses synchronously
+    Stream<List<Address>> address = userProfileCollection
+        .doc(userID)
+        .collection('delivery addresses')
+        .snapshots()
+        .map((querySnapshot) {
+      return querySnapshot.docs
+          .map((doc) => Address.fromJson(doc.data()))
+          .toList();
+    });
+
+    return address;
   }
 
   //fetch single product
@@ -286,7 +319,7 @@ class DataBaseService {
     try {
       return ordersCollection.snapshots().map((querySnapshot) {
         return querySnapshot.docs
-            .map((doc) => Orders.fromdata(doc.data() as Map<String, dynamic>))
+            .map((doc) => Orders.fromJson(doc.data() as Map<String, dynamic>))
             .toList();
       }).asBroadcastStream();
     } catch (e) {
@@ -328,7 +361,79 @@ class DataBaseService {
     }
   }
 
+  //admin settings
+  //get admin variables
+  Future<AdminVariables> getAdminVariables() async {
+    try {
+      var data = await adminVariablesCollection.doc('admin').get();
+      if (data.exists) {
+        return AdminVariables.fromJson(data.data() as Map<String, dynamic>);
+      } else {
+        throw Exception("Admin variables dont exist");
+      }
+    } catch (e) {
+      print(e);
+      throw Exception("Failed to get admin variables");
+    }
+  }
+
+  //modify an admin variable
+  Future modifyAdminVariable(String fieldName, dynamic fieldValue,
+      {String? operation}) async {
+    try {
+      if (operation == "add category") {
+        await adminVariablesCollection.doc('admin').set({
+          fieldName: fieldName == "categories"
+              ? FieldValue.arrayUnion(fieldValue)
+              : fieldValue
+        }, SetOptions(merge: true));
+      } else if (operation == "delete category") {
+        await adminVariablesCollection.doc('admin').set({
+          fieldName: fieldName == "categories"
+              ? FieldValue.arrayRemove(fieldValue)
+              : fieldValue
+        }, SetOptions(merge: true));
+      } else {
+        await adminVariablesCollection.doc('admin').set({
+          fieldName: fieldValue,
+        }, SetOptions(merge: true));
+      }
+      return 'success';
+    } on FirebaseException catch (e) {
+      print(e.message);
+    }
+  }
+
   //payment stuff
+  //Get vendors withdrawal requests
+  Stream<List<WithdrawalRequest>> getWithdrawalRequests() {
+    var data = withdrawalRequestCollection.snapshots();
+    return data.map(
+      (snapshot) => snapshot.docs.map((doc) {
+        return WithdrawalRequest.fromJson(doc.data() as Map<String, dynamic>);
+      }).toList(),
+    );
+  }
+
+  //Get cancellation requests
+  Stream<List<CancellationRequest>> getCancellationRequests() {
+    var data = cancellationRequestCollection.snapshots();
+    return data.map(
+      (snapshot) => snapshot.docs.map((doc) {
+        return CancellationRequest.fromData(doc.data() as Map<String, dynamic>);
+      }).toList(),
+    );
+  }
+
+  //Get refund requests
+  Stream<List<WithdrawalRequest>> getRefundRequests() {
+    var data = refundRequestCollection.snapshots();
+    return data.map(
+      (snapshot) => snapshot.docs.map((doc) {
+        return WithdrawalRequest.fromJson(doc.data() as Map<String, dynamic>);
+      }).toList(),
+    );
+  }
 
   //referral
 

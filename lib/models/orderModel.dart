@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hair_main_street_admin/models/userModel.dart';
 
 Orders ordersFromJson(String str) => Orders.fromJson(json.decode(str));
 
@@ -10,8 +11,8 @@ class Orders {
   String? orderId;
   String? buyerId;
   String? vendorId;
-  int? totalPrice;
-  String? shippingAddress;
+  num? totalPrice;
+  Address? shippingAddress;
   String? orderStatus;
   Timestamp? createdAt;
   dynamic updatedAt;
@@ -36,24 +37,14 @@ class Orders {
         buyerId: json["buyerID"],
         vendorId: json["vendorID"],
         totalPrice: json["totalPrice"],
-        shippingAddress: json["shipping address"],
+        shippingAddress: json["shipping address"] != null
+            ? Address.fromJson(json["shipping address"])
+            : Address(),
         orderStatus: json["order status"],
         createdAt: json["created at"],
         updatedAt: json["updated at"],
         paymentMethod: json['payment method'],
         paymentStatus: json['payment status'],
-      );
-  factory Orders.fromdata(Map<String, dynamic> data) => Orders(
-        orderId: data["orderID"],
-        buyerId: data["buyerID"],
-        vendorId: data["vendorID"],
-        totalPrice: data["totalPrice"],
-        shippingAddress: data["shipping address"],
-        orderStatus: data["order status"],
-        createdAt: data["created at"],
-        updatedAt: data["updated at"],
-        paymentMethod: data['payment method'],
-        paymentStatus: data['payment status'],
       );
   Map<String, dynamic> toJson() => {
         "orderID": orderId,

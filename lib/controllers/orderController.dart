@@ -5,11 +5,11 @@ import 'package:hair_main_street_admin/services/database.dart';
 class OrderController extends GetxController {
   RxList<Orders> orders = <Orders>[].obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    fetchOrders();
-  }
+  // @override
+  // void onInit() {
+  //   super.onInit();
+  //   fetchOrders();
+  // }
 
   Future<void> fetchOrders() async {
     try {

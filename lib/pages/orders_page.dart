@@ -108,7 +108,7 @@ class OrdersPage extends StatelessWidget {
           }
         },
       ),
-      drawer: AppDrawer(),
+      //drawer: AppDrawer(),
     );
   }
 }

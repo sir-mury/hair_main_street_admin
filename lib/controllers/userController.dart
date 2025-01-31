@@ -8,10 +8,14 @@ import 'package:hair_main_street_admin/services/database.dart';
 
 class UserController extends GetxController {
   Rx<MyUser?> userState = Rx<MyUser?>(null);
+  RxInt buyers = 0.obs;
+  RxInt vendors = 0.obs;
+  RxInt admin = 0.obs;
   var isLoading = false.obs;
   var myUser = MyUser(isAdmin: true, isBuyer: false, isVendor: false).obs;
   var isObscure = true.obs;
   RxList<MyUser?> users = RxList<MyUser?>([]);
+  RxList<Address?> addresses = RxList<Address?>([]);
 
   get screenHeight => Get.height;
 
@@ -59,8 +63,13 @@ class UserController extends GetxController {
     return stream;
   }
 
-  Stream<List<MyUser?>> fetchMyusers() {
-    return DataBaseService().fetchUsers();
+  //fetch delivery address
+  void fetchDeliveryAddress(String userId) {
+    addresses.bindStream(DataBaseService().fetchDeliveryAddress(userId));
+  }
+
+  void fetchMyusers() {
+    users.bindStream(DataBaseService().fetchUsers());
   }
 
   // Create user

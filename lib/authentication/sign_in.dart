@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth_web/firebase_auth_web.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hair_main_street_admin/pages/dashboard_page.dart';

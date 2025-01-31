@@ -76,7 +76,7 @@ class ShopsPage extends StatelessWidget {
           }
         },
       ),
-      drawer: AppDrawer(),
+      //drawer: AppDrawer(),
     );
   }
 

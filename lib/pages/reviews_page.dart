@@ -56,7 +56,7 @@ class ReviewPage extends StatelessWidget {
           );
         },
       ),
-      drawer: AppDrawer(),
+      //drawer: AppDrawer(),
     );
   }
 }
